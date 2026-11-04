@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Peminjaman Buku Perpustakaan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .digital-font {
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Custom Scrollbar for Logs */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 md:p-6">
+
+    <!-- TOP HEADER BAR -->
+    <header class="max-w-7xl w-full mx-auto mb-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-800/80 backdrop-blur border border-slate-700/60 p-4 rounded-2xl shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="p-3 bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+                <i class="fa-solid fa-book-bookmark text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-black tracking-wide text-white flex items-center gap-2">
+                    SMART LIBRARY <span class="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded font-mono">PRO V1</span>
+                </h1>
+                <p class="text-xs text-slate-400">Sistem Peminjaman & Pengembalian Buku Digital</p>
+            </div>
+        </div>
+
+        <!-- User Profile Quick Info -->
+        <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700/50">
+            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs text-white">
+                AP
+            </div>
+            <div class="flex flex-col">
+                <span class="text-xs font-bold text-slate-200">Anggota Perpustakaan</span>
+                <span class="text-[10px] text-slate-400 font-mono">ID: LIB-2026-8801</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- DASHBOARD STATS SUMMARY -->
+    <section class="max-w-7xl w-full mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center gap-4">
+            <div class="p-3 bg-slate-700/50 text-slate-300 rounded-lg text-xl">
+                <i class="fa-solid fa-books"></i>
+            </div>
+            <div>
+                <span class="text-[11px] text-slate-400 block font-medium">Total Katalog</span>
+                <span id="statTotalBooks" class="digital-font text-2xl font-bold text-white">0</span>
+            </div>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center gap-4">
+            <div class="p-3 bg-emerald-500/20 text-emerald-400 rounded-lg text-xl border border-emerald-500/30">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <span class="text-[11px] text-slate-400 block font-medium">Buku Tersedia</span>
+                <span id="statAvailableBooks" class="digital-font text-2xl font-bold text-emerald-400">0</span>
+            </div>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center gap-4">
+            <div class="p-3 bg-amber-500/20 text-amber-400 rounded-lg text-xl border border-amber-500/30">
+                <i class="fa-solid fa-book-open"></i>
+            </div>
+            <div>
+                <span class="text-[11px] text-slate-400 block font-medium">Sedang Dipinjam</span>
+                <span id="statBorrowedBooks" class="digital-font text-2xl font-bold text-amber-400">0</span>
+            </div>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center gap-4">
+            <div class="p-3 bg-red-500/20 text-red-400 rounded-lg text-xl border border-red-500/30">
+                <i class="fa-solid fa-hand-holding-dollar"></i>
+            </div>
+            <div>
+                <span class="text-[11px] text-slate-400 block font-medium">Total Denda Terkumpul</span>
+                <span id="statTotalFine" class="digital-font text-xl font-bold text-red-400">Rp 0</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 mb-auto">
+
+        <!-- LEFT PANEL: CATALOG & SEARCH (8 COLS) -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+
+            <!-- SEARCH & FILTER BAR -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row gap-3 justify-between items-center">
+                <div class="relative w-full sm:w-72">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" onkeyup="filterBooks()" placeholder="Cari judul atau pengarang..." 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+                </div>
+
+                <!-- Category Filters -->
+                <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 custom-scrollbar">
+                    <button onclick="filterCategory('ALL')" class="category-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">Semua</button>
+                    <button onclick="filterCategory('Teknologi')" class="category-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700/60 text-slate-300 hover:bg-slate-700 transition">Teknologi</button>
+                    <button onclick="filterCategory('Novel')" class="category-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700/60 text-slate-300 hover:bg-slate-700 transition">Novel</button>
+                    <button onclick="filterCategory('Sains')" class="category-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700/60 text-slate-300 hover:bg-slate-700 transition">Sains</button>
+                    <button onclick="filterCategory('Sejarah')" class="category-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700/60 text-slate-300 hover:bg-slate-700 transition">Sejarah</button>
+                </div>
+            </div>
+
+            <!-- BOOK CATALOG GRID -->
+            <div id="bookGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Book Cards Injected via JS -->
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: ACTIVE BORROWINGS & LOGS (4 COLS) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+
+            <!-- ACTIVE BORROWED BOOKS LIST -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 md:p-5 shadow-xl flex flex-col">
+                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between mb-4 pb-2 border-b border-slate-700">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-bookmark text-indigo-400"></i> Peminjaman Aktif
+                    </span>
+                    <span id="activeBorrowCount" class="text-xs font-mono bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full">0</span>
+                </h3>
+
+                <div id="borrowedContainer" class="space-y-3 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                    <!-- Borrowed Items injected dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- EVENT LOG CARD -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 md:p-5 shadow-xl flex-1 flex flex-col h-full min-h-[300px]">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700">
+                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-list-ul text-amber-400"></i> Log Aktivitas Sistem
+                    </h3>
+                    <button onclick="clearLogs()" class="text-[11px] text-slate-400 hover:text-slate-200 transition underline">
+                        Bersihkan
+                    </button>
+                </div>
+
+                <!-- Log Items Container -->
+                <div id="logContainer" class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar max-h-[350px]">
+                    <!-- Logs injected dynamically via JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="max-w-7xl w-full mx-auto mt-6 text-center text-xs text-slate-500 py-2 border-t border-slate-800">
+        Simulator Sistem Peminjaman Perpustakaan &copy; 2026. Interactive HTML5 &amp; JavaScript.
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // KATALOG BUKU DATA INITIALIZATION
+        let books = [
+            {
+                id: "B-101",
+                title: "Algoritma & Pemrograman HTML5",
+                author: "Budi Raharjo",
+                category: "Teknologi",
+                isBorrowed: false,
+                borrowDate: null,
+                dueDate: null,
+                fine: 0,
+                icon: "fa-code",
+                color: "from-blue-600 to-indigo-700"
+            },
+            {
+                id: "B-102",
+                title: "Laskar Pelangi",
+                author: "Andrea Hirata",
+                category: "Novel",
+                isBorrowed: false,
+                borrowDate: null,
+                dueDate: null,
+                fine: 0,
+                icon: "fa-book-open-reader",
+                color: "from-amber-600 to-orange-700"
+            },
+            {
+                id: "B-103",
+                title: "Fisika Kuantum Modern",
+                author: "Prof. Handoko",
+                category: "Sains",
+                isBorrowed: false,
+                borrowDate: null,
+                dueDate: null,
+                fine: 0,
+                icon: "fa-atom",
+                color: "from-cyan-600 to-teal-700"
+            },
+            {
+                id: "B-104",
+                title: "Sejarah Peradaban Dunia",
+                author: "A. Suroto",
+                category: "Sejarah",
+                isBorrowed: false,
+                borrowDate: null,
+                dueDate: null,
+                fine: 0,
+                icon: "fa-landmark",
+                color: "from-emerald-600 to-green-700"
+            },
+            {
+                id: "B-105",
+                title: "Kecerdasan Buatan & AI",
+                author: "Dr. Rian Hidayat",
+                category: "Teknologi",
+                isBorrowed: false,
+                borrowDate: null,
+                dueDate: null,
+                fine: 0,
+                icon: "fa-brain",
+                color: "from-purple-600 to-indigo-700"
+            },
+            {
+                id: "B-106",
+                title: "Bumi Manusia",
+                author: "Pramoedya Ananta Toer",
+                category: "Novel",
+                isBorrowed: false,
+                borrowDate: null,
+                dueDate: null,
+                fine: 0,
+                icon: "fa-feather",
+                color: "from-rose-600 to-pink-700"
+            }
+        ];
+
+        let totalAccumulatedFine = 0;
+        let selectedCategory = "ALL";
+
+        // INITIALIZATION
+        window.addEventListener('load', () => {
+            renderCatalog();
+            updateStats();
+            addLog("Sistem peminjaman perpustakaan siap digunakan.", "info");
+        });
+
+        // RENDER CATALOG GRID
+        function renderCatalog() {
+            const grid = document.getElementById('bookGrid');
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
+            grid.innerHTML = '';
+
+            const filtered = books.filter(book => {
+                const matchCategory = selectedCategory === "ALL" || book.category === selectedCategory;
+                const matchSearch = book.title.toLowerCase().includes(searchKeyword) || book.author.toLowerCase().includes(searchKeyword);
+                return matchCategory && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8 text-center text-slate-400">
+                        <i class="fa-solid fa-book-bookmark text-3xl mb-2 text-slate-500"></i>
+                        <p class="text-sm font-semibold">Tidak ada buku yang sesuai dengan pencarian.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(book => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex flex-col justify-between shadow-xl hover:border-slate-600 transition";
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div class="p-3 bg-gradient-to-br ${book.color} text-white rounded-xl shadow-md">
+                            <i class="fa-solid ${book.icon} text-xl"></i>
+                        </div>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border ${book.isBorrowed ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'} font-semibold">
+                            ${book.isBorrowed ? 'Dipinjam' : 'Tersedia'}
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">${book.category}</span>
+                        <h4 class="font-bold text-slate-100 text-sm line-clamp-1 mt-0.5">${book.title}</h4>
+                        <p class="text-xs text-slate-400">${book.author}</p>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-700/50 flex items-center justify-between">
+                        <span class="text-[10px] font-mono text-slate-400">${book.id}</span>
+                        ${book.isBorrowed ? 
+                            `<button onclick="returnBook('${book.id}')" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg transition active:scale-95 flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate-left text-xs"></i> Pulangkan
+                             </button>` :
+                            `<button onclick="borrowBook('${book.id}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition shadow-md shadow-indigo-600/30 active:scale-95 flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus text-xs"></i> Pinjam Buku
+                             </button>`
+                        }
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            renderBorrowedList();
+        }
+
+        // BORROW BOOK HANDLER
+        function borrowBook(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if (!book || book.isBorrowed) return;
+
+            const today = new Date();
+            const dueDate = new Date();
+            dueDate.setDate(today.getDate() + 7); // Masa pinjam 7 hari
+
+            book.isBorrowed = true;
+            book.borrowDate = today.toLocaleDateString('id-ID');
+            book.dueDate = dueDate.toLocaleDateString('id-ID');
+            book.fine = 0;
+
+            addLog(`Buku "${book.title}" berhasil dipinjam. Batas pengembalian: ${book.dueDate}.`, "success");
+            renderCatalog();
+            updateStats();
+        }
+
+        // RETURN BOOK HANDLER
+        function returnBook(bookId, simulateLateDays = 0) {
+            const book = books.find(b => b.id === bookId);
+            if (!book || !book.isBorrowed) return;
+
+            let fineMessage = "";
+            if (simulateLateDays > 0) {
+                const fineAmount = simulateLateDays * 1000; // Denda Rp 1.000 / hari
+                book.fine = fineAmount;
+                totalAccumulatedFine += fineAmount;
+                fineMessage = ` (Terlambat ${simulateLateDays} hari, Denda: Rp ${fineAmount.toLocaleString('id-ID')})`;
+            }
+
+            book.isBorrowed = false;
+            book.borrowDate = null;
+            book.dueDate = null;
+
+            addLog(`Buku "${book.title}" telah dikembalikan.${fineMessage}`, simulateLateDays > 0 ? "warning" : "info");
+            renderCatalog();
+            updateStats();
+        }
+
+        // RENDER BORROWED ITEMS SIDE PANEL
+        function renderBorrowedList() {
+            const container = document.getElementById('borrowedContainer');
+            const borrowedBooks = books.filter(b => b.isBorrowed);
+            document.getElementById('activeBorrowCount').innerText = borrowedBooks.length;
+
+            container.innerHTML = '';
+
+            if (borrowedBooks.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-slate-900/60 border border-slate-700/40 rounded-xl p-4 text-center text-slate-400 text-xs">
+                        Belum ada buku yang sedang dipinjam.
+                    </div>
+                `;
+                return;
+            }
+
+            borrowedBooks.forEach(book => {
+                const item = document.createElement('div');
+                item.className = "bg-slate-900/80 border border-slate-700/60 rounded-xl p-3 flex flex-col gap-2";
+
+                item.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 pr-2">
+                            <h5 class="text-xs font-bold text-slate-200 line-clamp-1">${book.title}</h5>
+                            <span class="text-[10px] text-slate-400">Jatuh tempo: <strong class="text-amber-400 font-mono">${book.dueDate}</strong></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-800 gap-2">
+                        <button onclick="returnBook('${book.id}', 0)" class="flex-1 py-1 px-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold transition">
+                            Pulangkan Tepat Waktu
+                        </button>
+                        <button onclick="returnBook('${book.id}', 3)" class="py-1 px-2 bg-amber-600/80 hover:bg-amber-600 text-white rounded text-[10px] font-bold transition" title="Simulasi terlambat 3 hari">
+                            +3 Hari (Denda)
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        // UPDATE DASHBOARD STATS
+        function updateStats() {
+            const total = books.length;
+            const borrowed = books.filter(b => b.isBorrowed).length;
+            const available = total - borrowed;
+
+            document.getElementById('statTotalBooks').innerText = total;
+            document.getElementById('statAvailableBooks').innerText = available;
+            document.getElementById('statBorrowedBooks').innerText = borrowed;
+            document.getElementById('statTotalFine').innerText = `Rp ${totalAccumulatedFine.toLocaleString('id-ID')}`;
+        }
+
+        // FILTER CATEGORY
+        function filterCategory(cat) {
+            selectedCategory = cat;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-slate-700/60', 'text-slate-300');
+            });
+            event.target.classList.remove('bg-slate-700/60', 'text-slate-300');
+            event.target.classList.add('bg-indigo-600', 'text-white');
+            renderCatalog();
+        }
+
+        function filterBooks() {
+            renderCatalog();
+        }
+
+        // EVENT LOG SYSTEM
+        function addLog(message, type = "info") {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString('id-ID', { hour12: false });
+
+            let badgeColor = "bg-slate-700 text-slate-300";
+            let borderColor = "border-slate-700";
+            let icon = "fa-info-circle text-sky-400";
+
+            if (type === "success") {
+                badgeColor = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40";
+                borderColor = "border-emerald-500/40";
+                icon = "fa-circle-check text-emerald-400";
+            } else if (type === "warning") {
+                badgeColor = "bg-amber-500/20 text-amber-400 border-amber-500/40";
+                borderColor = "border-amber-500/40";
+                icon = "fa-triangle-exclamation text-amber-400";
+            }
+
+            const logEntry = document.createElement('div');
+            logEntry.className = `p-2.5 rounded-xl bg-slate-900/90 border ${borderColor} text-xs flex items-start gap-2.5 shadow-sm transition-all duration-300`;
+            logEntry.innerHTML = `
+                <i class="fa-solid ${icon} mt-0.5 text-xs"></i>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="font-mono text-[10px] text-slate-400">${timestamp}</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded border ${badgeColor} font-semibold uppercase">${type}</span>
+                    </div>
+                    <p class="text-slate-200 font-medium leading-relaxed">${message}</p>
+                </div>
+            `;
+
+            logContainer.prepend(logEntry);
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLog("Log aktivitas dibersihkan.", "info");
+        }
+    </script>
+</body>
+</html>
